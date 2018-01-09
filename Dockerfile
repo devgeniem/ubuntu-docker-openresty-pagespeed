@@ -66,7 +66,7 @@ ARG RESTY_CONFIG_OPTIONS="\
     --http-client-body-temp-path=/tmp/nginx/client_body \
 
     --add-module=/tmp/ngx_http_redis-0.3.7-master \
-    --add-module=/tmp/ngx_pagespeed-${PAGESPEED_VERSION}-beta \
+    --add-module=/tmp/incubator-pagespeed-ngx-${PAGESPEED_VERSION}-beta \
     --add-module=/tmp/ngx_cache_purge-2.3 \
     --with-openssl=/tmp/openssl-${RESTY_OPENSSL_VERSION} \
     "
@@ -91,7 +91,8 @@ RUN \
 
     # psol needs to be inside ngx_pagespeed module
     # Download PageSpeed Optimization Library and extract it to nginx source dir
-    cd /tmp/ngx_pagespeed-${PAGESPEED_VERSION}-beta/ && \
+    #cd /tmp/ngx_pagespeed-${PAGESPEED_VERSION}-beta/ && \
+    cd /tmp/incubator-pagespeed-ngx-${PAGESPEED_VERSION}-beta/ && \
     echo "Downloading PSOL..." && \
     curl -L https://dl.google.com/dl/page-speed/psol/${PAGESPEED_VERSION}.tar.gz | tar -zx && \
 
