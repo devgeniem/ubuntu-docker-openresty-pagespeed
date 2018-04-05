@@ -2,10 +2,11 @@ FROM devgeniem/base:ubuntu
 MAINTAINER Ville Pietarinen - Geniem Oy <ville.pietarinen-nospam@geniem.com>
 
 # Build Arguments for openresty/nginx
-ARG RESTY_VERSION="1.11.2.1"
-ARG RESTY_OPENSSL_VERSION="1.0.2j"
+ARG RESTY_VERSION="1.13.6.1"
+ARG RESTY_OPENSSL_VERSION="1.0.2o"
 
-ARG PAGESPEED_VERSION="1.11.33.4"
+ARG PAGESPEED_VERSION="1.12.34.3"
+ARG PSOL_VERSION="1.12.34.2-x64"
 
 # Fix apt-get and show colors
 ARG DEBIAN_FRONTEND=noninteractive
@@ -65,8 +66,7 @@ ARG RESTY_CONFIG_OPTIONS="\
     --http-proxy-temp-path=/tmp/nginx/proxy \
     --http-client-body-temp-path=/tmp/nginx/client_body \
 
-    --add-module=/tmp/ngx_http_redis-0.3.7-master \
-    --add-module=/tmp/incubator-pagespeed-ngx-${PAGESPEED_VERSION}-beta \
+    --add-module=/tmp/incubator-pagespeed-ngx-${PAGESPEED_VERSION}-stable \
     --add-module=/tmp/ngx_cache_purge-2.3 \
     --with-openssl=/tmp/openssl-${RESTY_OPENSSL_VERSION} \
     "
@@ -85,16 +85,16 @@ RUN \
     ### Download Tarballs ###
     # Download PageSpeed
     echo "Downloading PageSpeed..." && \
-    curl -L https://github.com/pagespeed/ngx_pagespeed/archive/v${PAGESPEED_VERSION}-beta.tar.gz | tar -zx && \
+    curl -L https://github.com/pagespeed/ngx_pagespeed/archive/v${PAGESPEED_VERSION}-stable.tar.gz | tar -zx && \
 
     ls -lah && \
 
     # psol needs to be inside ngx_pagespeed module
     # Download PageSpeed Optimization Library and extract it to nginx source dir
     #cd /tmp/ngx_pagespeed-${PAGESPEED_VERSION}-beta/ && \
-    cd /tmp/incubator-pagespeed-ngx-${PAGESPEED_VERSION}-beta/ && \
+    cd /tmp/incubator-pagespeed-ngx-${PAGESPEED_VERSION}-stable/ && \
     echo "Downloading PSOL..." && \
-    curl -L https://dl.google.com/dl/page-speed/psol/${PAGESPEED_VERSION}.tar.gz | tar -zx && \
+    curl -L https://dl.google.com/dl/page-speed/psol/${PSOL_VERSION}.tar.gz | tar -zx && \
 
     cd /tmp/ && \
     # Download Nginx cache purge module
@@ -110,8 +110,9 @@ RUN \
     curl -L https://openresty.org/download/openresty-${RESTY_VERSION}.tar.gz | tar -zx && \
 
     # Download custom redis module with AUTH support
-    echo "Downloading ngx_http_redis..." && \
-    curl -L https://github.com/onnimonni/ngx_http_redis-0.3.7/archive/master.tar.gz | tar -zx && \
+    #echo "Downloading ngx_http_redis..." && \
+    #curl -L https://github.com/onnimonni/ngx_http_redis-0.3.7/archive/master.tar.gz | tar -zx && \
+    #curl -L https://github.com/openresty/redis2-nginx-module/archive/v0.15rc1.tar.gz | tar -zx && \
 
     # Use all cores available in the builds with -j${NPROC} flag
     readonly NPROC=$(grep -c ^processor /proc/cpuinfo 2>/dev/null || 1)  && \
