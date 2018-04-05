@@ -109,11 +109,6 @@ RUN \
     echo "Downloading openresty..." && \
     curl -L https://openresty.org/download/openresty-${RESTY_VERSION}.tar.gz | tar -zx && \
 
-    # Download custom redis module with AUTH support
-    #echo "Downloading ngx_http_redis..." && \
-    #curl -L https://github.com/onnimonni/ngx_http_redis-0.3.7/archive/master.tar.gz | tar -zx && \
-    #curl -L https://github.com/openresty/redis2-nginx-module/archive/v0.15rc1.tar.gz | tar -zx && \
-
     # Use all cores available in the builds with -j${NPROC} flag
     readonly NPROC=$(grep -c ^processor /proc/cpuinfo 2>/dev/null || 1)  && \
     echo "using up to $NPROC threads" && \
