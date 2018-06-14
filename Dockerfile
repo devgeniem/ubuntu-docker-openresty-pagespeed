@@ -69,6 +69,7 @@ ARG RESTY_CONFIG_OPTIONS="\
     --add-module=/tmp/incubator-pagespeed-ngx-${PAGESPEED_VERSION}-stable \
     --add-module=/tmp/ngx_cache_purge-2.3 \
     --with-openssl=/tmp/openssl-${RESTY_OPENSSL_VERSION} \
+    --add-module=nginx-upstream-dynamic-servers \
     "
 
 

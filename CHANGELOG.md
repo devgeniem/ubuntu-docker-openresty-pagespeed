@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+- add-module=nginx-upstream-dynamic-servers
+
 ## [1.1.0] - 2018-01-09
 ### Added
 - Updated open resty to stable versio 1.13.6.1
