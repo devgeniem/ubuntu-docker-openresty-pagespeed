@@ -69,7 +69,7 @@ ARG RESTY_CONFIG_OPTIONS="\
     --add-module=/tmp/incubator-pagespeed-ngx-${PAGESPEED_VERSION}-stable \
     --add-module=/tmp/ngx_cache_purge-2.3 \
     --with-openssl=/tmp/openssl-${RESTY_OPENSSL_VERSION} \
-    --add-module=nginx-upstream-dynamic-servers \
+    --add-module=/tmp/nginx-upstream-dynamic-servers \
     "
 
 
@@ -80,6 +80,7 @@ ARG BUILD_DEPS='build-essential curl libreadline-dev libncurses5-dev libpcre3-de
 RUN \
     apt-get update && \
     apt-get -y install $BUILD_DEPS --no-install-recommends && \
+    apt-get -y install git-all && \
 
     cd /tmp/ && \
 
@@ -109,6 +110,10 @@ RUN \
     # Download Openresty bundle
     echo "Downloading openresty..." && \
     curl -L https://openresty.org/download/openresty-${RESTY_VERSION}.tar.gz | tar -zx && \
+
+    # Download nginx-upstream-dynamic-servers
+    echo "Downloading nginx-upstream-dynamic-servers module.." && \
+    git clone https://github.com/GUI/nginx-upstream-dynamic-servers.git && \
 
     # Use all cores available in the builds with -j${NPROC} flag
     readonly NPROC=$(grep -c ^processor /proc/cpuinfo 2>/dev/null || 1)  && \
