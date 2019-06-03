@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 - install git and fetch add-module=nginx-upstream-dynamic-servers
+- install shibboleth-sp2-common shibboleth-sp2-schemas and shibboleth-sp2-utils
+- nginx compiled with add-module=nginx-http-shibboleth
 
 ## [1.1.0] - 2018-01-09
 ### Added

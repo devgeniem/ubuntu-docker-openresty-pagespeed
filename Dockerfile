@@ -70,17 +70,20 @@ ARG RESTY_CONFIG_OPTIONS="\
     --add-module=/tmp/ngx_cache_purge-2.3 \
     --with-openssl=/tmp/openssl-${RESTY_OPENSSL_VERSION} \
     --add-module=/tmp/nginx-upstream-dynamic-servers \
+    --add-module=/tmp/nginx-http-shibboleth \
     "
 
 
 # These are only needed during the installation
-ARG BUILD_DEPS='build-essential curl libreadline-dev libncurses5-dev libpcre3-dev libgeoip-dev zlib1g-dev ca-certificates'
+ARG BUILD_DEPS='build-essential curl libreadline-dev libncurses5-dev libpcre3-dev libgeoip-dev zlib1g-dev ca-certificates wget unzip mercurial devscripts debhelper quilt libssl-dev fakeroot'
 
 # Install base utils
 RUN \
     apt-get update && \
     apt-get -y install $BUILD_DEPS --no-install-recommends && \
     apt-get -y install git-all && \
+    # Install shibboleth
+    apt-get -y install shibboleth-sp2-common shibboleth-sp2-schemas shibboleth-sp2-utils && \
 
     cd /tmp/ && \
 
@@ -114,6 +117,10 @@ RUN \
     # Download nginx-upstream-dynamic-servers
     echo "Downloading nginx-upstream-dynamic-servers module.." && \
     git clone https://github.com/GUI/nginx-upstream-dynamic-servers.git && \
+
+    # Download nginx-http-shibboleth
+    echo "Downloading nginx-http-shibboleth module.." && \
+    git clone https://github.com/nginx-shib/nginx-http-shibboleth.git && \
 
     # Use all cores available in the builds with -j${NPROC} flag
     readonly NPROC=$(grep -c ^processor /proc/cpuinfo 2>/dev/null || 1)  && \
