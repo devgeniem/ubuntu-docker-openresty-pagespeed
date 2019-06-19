@@ -83,7 +83,9 @@ RUN \
     apt-get -y install $BUILD_DEPS --no-install-recommends && \
     apt-get -y install git-all && \
     # Install shibboleth
-    apt-get -y install shibboleth-sp2-common shibboleth-sp2-schemas shibboleth-sp2-utils && \
+    apt-get -y install shibboleth-sp2-common shibboleth-sp2-schemas && \
+    # Need to install recommended packages also to get shibdresponder and shibdauthorizer
+    apt-get -y install shibboleth-sp2-utils --install-recommends && \
 
     cd /tmp/ && \
 
