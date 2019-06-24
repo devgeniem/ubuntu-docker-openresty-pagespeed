@@ -86,6 +86,8 @@ RUN \
     apt-get -y install shibboleth-sp2-common shibboleth-sp2-schemas && \
     # Need to install recommended packages also to get shibdresponder and shibdauthorizer
     apt-get -y install shibboleth-sp2-utils --install-recommends && \
+    # Mark the sp2-utils so that autoremove wont remove it
+    apt-mark manual shibboleth-sp2-utils && \
 
     cd /tmp/ && \
 
