@@ -83,11 +83,7 @@ RUN \
     apt-get -y install $BUILD_DEPS --no-install-recommends && \
     apt-get -y install git-all && \
     # Install shibboleth
-    apt-get -y install shibboleth-sp2-common shibboleth-sp2-schemas && \
-    # Need to install recommended packages also to get shibdresponder and shibdauthorizer
-    apt-get -y install shibboleth-sp2-utils --install-recommends && \
-    # Mark the sp2-utils so that autoremove wont remove it
-    apt-mark manual shibboleth-sp2-utils && \
+    apt-get -y install shibboleth-sp2-common shibboleth-sp2-schemas shibboleth-sp2-utils && \
 
     cd /tmp/ && \
 
@@ -142,7 +138,10 @@ RUN \
 
     ## Cleanup
     rm -rf /var/lib/apt/lists/* && \
-    apt-get remove --purge -y $BUILD_DEPS $(apt-mark showauto) && \
+    # Temporarily disabled apt-mark showauto because it removes sp2-utils!!
+    apt-get remove --purge -y $BUILD_DEPS && \
+    apt-get -y autoremove && \
+    #apt-get remove --purge -y $BUILD_DEPS $(apt-mark showauto) && \
     rm -rf /tmp/* /var/log/apt/*
 
 RUN \
