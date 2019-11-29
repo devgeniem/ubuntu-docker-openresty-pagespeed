@@ -2,10 +2,10 @@ FROM devgeniem/base:ubuntu
 MAINTAINER Ville Pietarinen - Geniem Oy <ville.pietarinen-nospam@geniem.com>
 
 # Build Arguments for openresty/nginx
-ARG RESTY_VERSION="1.11.2.1"
-ARG RESTY_OPENSSL_VERSION="1.0.2j"
+ARG RESTY_VERSION="1.15.8.2"
+ARG RESTY_OPENSSL_VERSION="1.1.1c"
 
-ARG PAGESPEED_VERSION="1.11.33.4"
+ARG PAGESPEED_VERSION="1.13.35.2"
 
 # Fix apt-get and show colors
 ARG DEBIAN_FRONTEND=noninteractive
@@ -48,8 +48,8 @@ ARG RESTY_CONFIG_OPTIONS="\
 
     --without-http_redis_module \
 
-     --user=nginx \
-     --group=nginx \
+    --user=nginx \
+    --group=nginx \
 
     --sbin-path=/usr/sbin \
     --modules-path=/usr/lib/nginx \
@@ -65,15 +65,14 @@ ARG RESTY_CONFIG_OPTIONS="\
     --http-proxy-temp-path=/tmp/nginx/proxy \
     --http-client-body-temp-path=/tmp/nginx/client_body \
 
-    --add-module=/tmp/ngx_http_redis-0.3.7-master \
-    --add-module=/tmp/incubator-pagespeed-ngx-${PAGESPEED_VERSION}-beta \
+    --add-module=/tmp/incubator-pagespeed-ngx-${PAGESPEED_VERSION}-stable \
     --add-module=/tmp/ngx_cache_purge-2.3 \
     --with-openssl=/tmp/openssl-${RESTY_OPENSSL_VERSION} \
     "
 
 
 # These are only needed during the installation
-ARG BUILD_DEPS='build-essential curl libreadline-dev libncurses5-dev libpcre3-dev libgeoip-dev zlib1g-dev ca-certificates'
+ARG BUILD_DEPS='build-essential curl libreadline-dev libncurses5-dev libpcre3-dev libgeoip-dev zlib1g-dev ca-certificates uuid-dev'
 
 # Install base utils
 RUN \
@@ -85,16 +84,16 @@ RUN \
     ### Download Tarballs ###
     # Download PageSpeed
     echo "Downloading PageSpeed..." && \
-    curl -L https://github.com/pagespeed/ngx_pagespeed/archive/v${PAGESPEED_VERSION}-beta.tar.gz | tar -zx && \
+    curl -L https://github.com/pagespeed/ngx_pagespeed/archive/v${PAGESPEED_VERSION}-stable.tar.gz | tar -zx && \
 
     ls -lah && \
 
     # psol needs to be inside ngx_pagespeed module
     # Download PageSpeed Optimization Library and extract it to nginx source dir
-    #cd /tmp/ngx_pagespeed-${PAGESPEED_VERSION}-beta/ && \
-    cd /tmp/incubator-pagespeed-ngx-${PAGESPEED_VERSION}-beta/ && \
+    #cd /tmp/ngx_pagespeed-${PAGESPEED_VERSION}-stable/ && \
+    cd /tmp/incubator-pagespeed-ngx-${PAGESPEED_VERSION}-stable/ && \
     echo "Downloading PSOL..." && \
-    curl -L https://dl.google.com/dl/page-speed/psol/${PAGESPEED_VERSION}.tar.gz | tar -zx && \
+    curl -L https://dl.google.com/dl/page-speed/psol/${PAGESPEED_VERSION}-x64.tar.gz | tar -zx && \
 
     cd /tmp/ && \
     # Download Nginx cache purge module
