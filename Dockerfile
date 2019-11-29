@@ -1,4 +1,4 @@
-FROM devgeniem/base:ubuntu
+FROM devgeniem/base:edge
 MAINTAINER Ville Pietarinen - Geniem Oy <ville.pietarinen-nospam@geniem.com>
 
 # Build Arguments for openresty/nginx
