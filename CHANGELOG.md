@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-## [1.1.0] - 2018-01-09
+## [1.1.0] - 2021-08-12
 ### Changed 
 - Updated OpenResty to version 1.19.9.1
 - Updated OpenSSL to version 1.1.1k
