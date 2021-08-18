@@ -1,5 +1,5 @@
-FROM devgeniem/base:edge
-MAINTAINER Ville Pietarinen - Geniem Oy <ville.pietarinen-nospam@geniem.com>
+FROM devgeniem/base:edge2
+MAINTAINER Ville Pietarinen, Hannu Kumpula - Geniem Oy <ville.pietarinen-nospam@geniem.com> <hannu-nospam@geniem.com>
 
 # Build Arguments for openresty/nginx
 ARG RESTY_VERSION="1.19.9.1"
