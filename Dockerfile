@@ -1,4 +1,4 @@
-FROM devgeniem/base:edge2
+FROM devgeniem/base:edge
 MAINTAINER Ville Pietarinen, Hannu Kumpula - Geniem Oy <ville.pietarinen-nospam@geniem.com> <hannu-nospam@geniem.com>
 
 # Build Arguments for openresty/nginx
@@ -84,7 +84,7 @@ RUN \
     ### Download Tarballs ###
     # Download PageSpeed
     echo "Downloading PageSpeed..." && \
-    curl -L https://github.com/pagespeed/ngx_pagespeed/archive/v${PAGESPEED_VERSION}-stable.tar.gz | tar -zx && \
+    curl -L https://github.com/apache/incubator-pagespeed-ngx/archive/v${PAGESPEED_VERSION}-stable.tar.gz | tar -zx && \
 
     ls -lah && \
 
