@@ -1,5 +1,5 @@
 FROM devgeniem/base:edge
-MAINTAINER Ville Pietarinen, Hannu Kumpula - Geniem Oy <ville.pietarinen-nospam@geniem.com> <hannu-nospam@geniem.com>
+#MAINTAINER Ville Pietarinen, Hannu Kumpula - Geniem Oy <ville.pietarinen-nospam@geniem.com> <hannu-nospam@geniem.com>
 
 # Build Arguments for openresty/nginx
 ARG RESTY_VERSION="1.19.9.1"
@@ -68,16 +68,23 @@ ARG RESTY_CONFIG_OPTIONS="\
     --add-module=/tmp/incubator-pagespeed-ngx-${PAGESPEED_VERSION}-stable \
     --add-module=/tmp/ngx_cache_purge-2.3 \
     --with-openssl=/tmp/openssl-${RESTY_OPENSSL_VERSION} \
+    --add-module=/tmp/nginx-upstream-dynamic-servers \
+    --add-module=/tmp/nginx-http-shibboleth \
     "
 
 
 # These are only needed during the installation
-ARG BUILD_DEPS='build-essential curl libreadline-dev libncurses5-dev libpcre3-dev libgeoip-dev zlib1g-dev ca-certificates uuid-dev'
+ARG BUILD_DEPS='build-essential curl libreadline-dev libncurses5-dev libpcre3-dev libgeoip-dev zlib1g-dev ca-certificates uuid-dev wget unzip mercurial devscripts debhelper quilt libssl-dev fakeroot'
 
 # Install base utils
 RUN \
     apt-get update && \
     apt-get -y install $BUILD_DEPS --no-install-recommends && \
+    apt-get -y install git-all && \
+    # Install shibboleth
+    apt-get -y install shibboleth-sp2-common shibboleth-sp2-schemas shibboleth-sp2-utils && \
+    # Install supervisor for handling shibboleth fastcgi processes
+    apt-get -y install supervisor && \
 
     cd /tmp/ && \
 
@@ -108,6 +115,14 @@ RUN \
     echo "Downloading openresty..." && \
     curl -L https://openresty.org/download/openresty-${RESTY_VERSION}.tar.gz | tar -zx && \
 
+    # Download nginx-upstream-dynamic-servers
+    echo "Downloading nginx-upstream-dynamic-servers module.." && \
+    git clone https://github.com/GUI/nginx-upstream-dynamic-servers.git && \
+
+    # Download nginx-http-shibboleth
+    echo "Downloading nginx-http-shibboleth module.." && \
+    git clone https://github.com/nginx-shib/nginx-http-shibboleth.git && \
+
     # Download custom redis module with AUTH support
     echo "Downloading ngx_http_redis..." && \
     curl -L https://github.com/onnimonni/ngx_http_redis-0.3.7/archive/master.tar.gz | tar -zx && \
@@ -128,7 +143,10 @@ RUN \
 
     ## Cleanup
     rm -rf /var/lib/apt/lists/* && \
-    apt-get remove --purge -y $BUILD_DEPS $(apt-mark showauto) && \
+    # Temporarily disabled apt-mark showauto because it removes sp2-utils!!
+    apt-get remove --purge -y $BUILD_DEPS && \
+    apt-get -y autoremove && \
+    #apt-get remove --purge -y $BUILD_DEPS $(apt-mark showauto) && \    apt-get remove --purge -y $BUILD_DEPS $(apt-mark showauto) && \
     rm -rf /tmp/* /var/log/apt/*
 
 RUN \
