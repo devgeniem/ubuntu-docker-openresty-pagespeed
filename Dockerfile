@@ -2,8 +2,8 @@ FROM devgeniem/base:ubuntu
 MAINTAINER Ville Pietarinen - Geniem Oy <ville.pietarinen-nospam@geniem.com>
 
 # Build Arguments for openresty/nginx
-ARG RESTY_VERSION="1.13.6.1"
-ARG RESTY_OPENSSL_VERSION="1.0.2o"
+ARG RESTY_VERSION="1.19.9.1"
+ARG RESTY_OPENSSL_VERSION="1.1.1k"
 
 ARG PAGESPEED_VERSION="1.12.34.3"
 ARG PSOL_VERSION="1.12.34.2-x64"
