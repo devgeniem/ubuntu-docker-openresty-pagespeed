@@ -1,4 +1,4 @@
-FROM devgeniem/base:edge
+FROM devgeniem/base:multiarch
 MAINTAINER Ville Pietarinen, Hannu Kumpula - Geniem Oy <ville.pietarinen-nospam@geniem.com> <hannu-nospam@geniem.com>
 
 # Build Arguments for openresty/nginx
@@ -65,7 +65,7 @@ ARG RESTY_CONFIG_OPTIONS="\
     --http-proxy-temp-path=/tmp/nginx/proxy \
     --http-client-body-temp-path=/tmp/nginx/client_body \
 
-    --add-module=/tmp/incubator-pagespeed-ngx-${PAGESPEED_VERSION}-stable \
+    #--add-module=/tmp/incubator-pagespeed-ngx-${PAGESPEED_VERSION}-stable \
     --add-module=/tmp/ngx_cache_purge-2.3 \
     --with-openssl=/tmp/openssl-${RESTY_OPENSSL_VERSION} \
     "
@@ -83,19 +83,19 @@ RUN \
 
     ### Download Tarballs ###
     # Download PageSpeed
-    echo "Downloading PageSpeed..." && \
-    curl -L https://github.com/apache/incubator-pagespeed-ngx/archive/v${PAGESPEED_VERSION}-stable.tar.gz | tar -zx && \
+   ## echo "Downloading PageSpeed..." && \
+   ## curl -L https://github.com/apache/incubator-pagespeed-ngx/archive/v${PAGESPEED_VERSION}-stable.tar.gz | tar -zx && \
 
-    ls -lah && \
+  ##  ls -lah && \
 
     # psol needs to be inside ngx_pagespeed module
     # Download PageSpeed Optimization Library and extract it to nginx source dir
     #cd /tmp/ngx_pagespeed-${PAGESPEED_VERSION}-stable/ && \
-    cd /tmp/incubator-pagespeed-ngx-${PAGESPEED_VERSION}-stable/ && \
-    echo "Downloading PSOL..." && \
-    curl -L https://dl.google.com/dl/page-speed/psol/${PAGESPEED_VERSION}-x64.tar.gz | tar -zx && \
+   ## cd /tmp/incubator-pagespeed-ngx-${PAGESPEED_VERSION}-stable/ && \
+   ## echo "Downloading PSOL..." && \
+   ## curl -L https://dl.google.com/dl/page-speed/psol/${PAGESPEED_VERSION}-x64.tar.gz | tar -zx && \
 
-    cd /tmp/ && \
+   ## cd /tmp/ && \
     # Download Nginx cache purge module
     echo "Downloading Nginx cache purge module..." && \
     curl -L http://labs.frickle.com/files/ngx_cache_purge-2.3.tar.gz | tar -zx && \
