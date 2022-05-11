@@ -1,11 +1,9 @@
-FROM devgeniem/base:multiarch
+FROM devgeniem/base:edge-arm
 MAINTAINER Ville Pietarinen, Hannu Kumpula - Geniem Oy <ville.pietarinen-nospam@geniem.com> <hannu-nospam@geniem.com>
 
 # Build Arguments for openresty/nginx
 ARG RESTY_VERSION="1.19.9.1"
 ARG RESTY_OPENSSL_VERSION="1.1.1k"
-
-ARG PAGESPEED_VERSION="1.13.35.2"
 
 # Fix apt-get and show colors
 ARG DEBIAN_FRONTEND=noninteractive
@@ -65,7 +63,7 @@ ARG RESTY_CONFIG_OPTIONS="\
     --http-proxy-temp-path=/tmp/nginx/proxy \
     --http-client-body-temp-path=/tmp/nginx/client_body \
 
-    #--add-module=/tmp/incubator-pagespeed-ngx-${PAGESPEED_VERSION}-stable \
+    --add-dynamic-module=/usr/local/src/incubator-pagespeed-ngx-master --with-compat --with-cc-opt='-DNGX_HTTP_HEADERS' \
     --add-module=/tmp/ngx_cache_purge-2.3 \
     --with-openssl=/tmp/openssl-${RESTY_OPENSSL_VERSION} \
     "
@@ -78,24 +76,28 @@ ARG BUILD_DEPS='build-essential curl libreadline-dev libncurses5-dev libpcre3-de
 RUN \
     apt-get update && \
     apt-get -y install $BUILD_DEPS --no-install-recommends && \
+    apt-get -y install unzip && \
+    apt-get -y install wget
 
-    cd /tmp/ && \
 
-    ### Download Tarballs ###
+# Download Pagespeed source
+RUN \
     # Download PageSpeed
-   ## echo "Downloading PageSpeed..." && \
-   ## curl -L https://github.com/apache/incubator-pagespeed-ngx/archive/v${PAGESPEED_VERSION}-stable.tar.gz | tar -zx && \
+    echo "Downloading PageSpeed..." && \
+    cd /usr/local/src && \
+    wget https://github.com/apache/incubator-pagespeed-ngx/archive/refs/heads/master.zip && \
+    ls -la && \
+    unzip /usr/local/src/master.zip && \
+    cd incubator-pagespeed-ngx-master/ && \ 
+    echo "Downloading PSOL..." && \
+    wget https://gitlab.com/gusco/ngx_pagespeed_arm/-/raw/master/psol-1.15.0.0-aarch64.tar.gz && \
+    tar xvf psol-1.15.0.0-aarch64.tar.gz && sed -i 's/x86_64/aarch64/' config && sed -i 's/x64/aarch64/' config && \
+    sed -i 's/-luuid/-l:libuuid.so.1/' config
 
-  ##  ls -lah && \
-
-    # psol needs to be inside ngx_pagespeed module
-    # Download PageSpeed Optimization Library and extract it to nginx source dir
-    #cd /tmp/ngx_pagespeed-${PAGESPEED_VERSION}-stable/ && \
-   ## cd /tmp/incubator-pagespeed-ngx-${PAGESPEED_VERSION}-stable/ && \
-   ## echo "Downloading PSOL..." && \
-   ## curl -L https://dl.google.com/dl/page-speed/psol/${PAGESPEED_VERSION}-x64.tar.gz | tar -zx && \
-
-   ## cd /tmp/ && \
+# Download openresty, modules and compile
+RUN \
+   
+    cd /tmp/ && \
     # Download Nginx cache purge module
     echo "Downloading Nginx cache purge module..." && \
     curl -L http://labs.frickle.com/files/ngx_cache_purge-2.3.tar.gz | tar -zx && \
@@ -131,10 +133,11 @@ RUN \
     apt-get remove --purge -y $BUILD_DEPS $(apt-mark showauto) && \
     rm -rf /tmp/* /var/log/apt/*
 
+# Create dirs and permissions
 RUN \
     # Temp directory
     mkdir /tmp/nginx/ \
-    mkdir -p /tmp/nginx/pagespeed/images/ \
+    && mkdir -p /tmp/nginx/pagespeed/images/ \
 
     # Symlink modules path to config path for easier usage
     && ln -sf /usr/lib/nginx /etc/nginx/modules \
@@ -146,3 +149,8 @@ RUN \
     # Symlink nginx logs to system output
     && ln -sf /dev/stdout /var/log/nginx/access.log \
     && ln -sf /dev/stderr /var/log/nginx/error.log
+
+# Cleanup
+RUN \
+    rm /usr/local/src/master.zip \
+    && rm -rf /usr/local/src/incubator-pagespeed-ngx-master
