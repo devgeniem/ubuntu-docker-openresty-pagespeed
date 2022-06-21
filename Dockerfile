@@ -4,6 +4,7 @@ MAINTAINER Ville Pietarinen, Hannu Kumpula - Geniem Oy <ville.pietarinen-nospam@
 # Build Arguments for openresty/nginx
 ARG RESTY_VERSION="1.19.9.1"
 ARG RESTY_OPENSSL_VERSION="1.1.1k"
+ARG NJS_VERSION="0.7.4"
 
 # Fix apt-get and show colors
 ARG DEBIAN_FRONTEND=noninteractive
@@ -65,12 +66,13 @@ ARG RESTY_CONFIG_OPTIONS="\
 
     --add-dynamic-module=/usr/local/src/incubator-pagespeed-ngx-master --with-compat --with-cc-opt='-DNGX_HTTP_HEADERS' \
     --add-module=/tmp/ngx_cache_purge-2.3 \
+    --add-module=/tmp/njs-${NJS_VERSION}/nginx \
     --with-openssl=/tmp/openssl-${RESTY_OPENSSL_VERSION} \
     "
 
 
 # These are only needed during the installation
-ARG BUILD_DEPS='build-essential curl libreadline-dev libncurses5-dev libpcre3-dev libgeoip-dev zlib1g-dev ca-certificates uuid-dev'
+ARG BUILD_DEPS='build-essential wget unzip curl libreadline-dev libncurses5-dev libpcre3-dev libgeoip-dev zlib1g-dev ca-certificates uuid-dev'
 
 # Install base utils
 RUN \
@@ -96,7 +98,7 @@ RUN \
 
 # Download openresty, modules and compile
 RUN \
-   
+
     cd /tmp/ && \
     # Download Nginx cache purge module
     echo "Downloading Nginx cache purge module..." && \
@@ -113,6 +115,11 @@ RUN \
     # Download custom redis module with AUTH support
     echo "Downloading ngx_http_redis..." && \
     curl -L https://github.com/onnimonni/ngx_http_redis-0.3.7/archive/master.tar.gz | tar -zx && \
+
+    # Download ngx-js module
+    echo "Downloading ngx_http_js..." && \
+    wget https://github.com/nginx/njs/archive/refs/tags/${NJS_VERSION}.zip && \
+    unzip ${NJS_VERSION}.zip && \
 
     # Use all cores available in the builds with -j${NPROC} flag
     readonly NPROC=$(grep -c ^processor /proc/cpuinfo 2>/dev/null || 1)  && \
