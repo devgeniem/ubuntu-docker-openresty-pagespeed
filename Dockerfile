@@ -84,8 +84,8 @@ RUN \
     apt-get -y install git-all && \
     # Install shibboleth
     apt-get -y install shibboleth-sp2-common shibboleth-sp2-utils && \
-    # Install supervisor for handling shibboleth fastcgi processes
-    apt-get -y install supervisor && \
+    # Install spawn-fcgi for handling shibboleth fastcgi processes
+    apt-get -y install spawn-fcgi && \
 
     cd /tmp/ && \
 
