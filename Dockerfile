@@ -1,4 +1,4 @@
-FROM devgeniem/base:edge
+FROM devgeniem/base:edge-2
 MAINTAINER Ville Pietarinen, Hannu Kumpula - Geniem Oy <ville.pietarinen-nospam@geniem.com> <hannu-nospam@geniem.com>
 
 # Build Arguments for openresty/nginx
@@ -72,14 +72,13 @@ ARG RESTY_CONFIG_OPTIONS="\
 
 
 # These are only needed during the installation
-ARG BUILD_DEPS='build-essential curl libreadline-dev libncurses5-dev libpcre3-dev libgeoip-dev zlib1g-dev ca-certificates uuid-dev'
+ARG BUILD_DEPS='build-essential curl make perl libreadline-dev libncurses5-dev libpcre3-dev libssl-dev libgeoip-dev zlib1g-dev ca-certificates uuid-dev'
 
 # Install base utils
-RUN \
-    apt-get update && \
-    apt-get -y install $BUILD_DEPS --no-install-recommends && \
+RUN apt-get update
+RUN apt-get -y install $BUILD_DEPS --no-install-recommends
 
-    cd /tmp/ && \
+RUN cd /tmp/ && \
 
     ### Download Tarballs ###
     # Download PageSpeed
@@ -128,7 +127,6 @@ RUN \
 
     ## Cleanup
     rm -rf /var/lib/apt/lists/* && \
-    apt-get remove --purge -y $BUILD_DEPS $(apt-mark showauto) && \
     rm -rf /tmp/* /var/log/apt/*
 
 RUN \
