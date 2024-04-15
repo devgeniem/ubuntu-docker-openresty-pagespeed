@@ -1,8 +1,8 @@
-FROM devgeniem/base:edge-2
-MAINTAINER Ville Pietarinen, Hannu Kumpula - Geniem Oy <ville.pietarinen-nospam@geniem.com> <hannu-nospam@geniem.com>
+FROM devgeniem/base:noble
+LABEL maintainer="Ville Pietarinen, Hannu Kumpula - Geniem Oy <ville.pietarinen-nospam@geniem.com> <hannu-nospam@geniem.com>"
 
 # Build Arguments for openresty/nginx
-ARG RESTY_VERSION="1.19.9.1"
+ARG RESTY_VERSION="1.21.4.1"
 ARG RESTY_OPENSSL_VERSION="1.1.1k"
 
 ARG PAGESPEED_VERSION="1.13.35.2"
@@ -72,11 +72,12 @@ ARG RESTY_CONFIG_OPTIONS="\
 
 
 # These are only needed during the installation
-ARG BUILD_DEPS='build-essential curl make perl libreadline-dev libncurses5-dev libpcre3-dev libssl-dev libgeoip-dev zlib1g-dev ca-certificates uuid-dev'
+ARG BUILD_DEPS='build-essential curl make perl libreadline-dev libpthread-stubs0-dev libncurses5-dev libpcre3-dev libssl-dev libgeoip-dev zlib1g-dev ca-certificates uuid-dev g++-11'
 
 # Install base utils
 RUN apt-get update
 RUN apt-get -y install $BUILD_DEPS --no-install-recommends
+
 
 RUN cd /tmp/ && \
 
