@@ -1,5 +1,5 @@
 FROM devgeniem/base:noble
-LABEL maintainer="Ville Pietarinen, Hannu Kumpula - Geniem Oy <ville.pietarinen-nospam@geniem.com> <hannu-nospam@geniem.com>"
+LABEL maintainer="Arttu Mäkipörhölä, Jussi Alanen - Hion Digital Oy <arttu.makiporhola-nospam@hiondigital.com> <jussi.alanen-nospam@hiondigital.com>"
 
 # Build Arguments for openresty/nginx
 ARG RESTY_VERSION="1.21.4.1"
@@ -65,7 +65,7 @@ ARG RESTY_CONFIG_OPTIONS="\
     --http-proxy-temp-path=/tmp/nginx/proxy \
     --http-client-body-temp-path=/tmp/nginx/client_body \
 
-    --add-module=/tmp/incubator-pagespeed-ngx-${PAGESPEED_VERSION}-stable \
+    # --add-module=/tmp/incubator-pagespeed-ngx-${PAGESPEED_VERSION}-stable \
     --add-module=/tmp/ngx_cache_purge-2.3 \
     --with-openssl=/tmp/openssl-${RESTY_OPENSSL_VERSION} \
     "
