@@ -1,17 +1,94 @@
-FROM devgeniem/base:noble
-LABEL maintainer="Arttu Mäkipörhölä, Jussi Alanen - Hion Digital Oy <arttu.makiporhola-nospam@hiondigital.com> <jussi.alanen-nospam@hiondigital.com>"
+FROM ubuntu:noble
 
-# Build Arguments for openresty/nginx
-ARG RESTY_VERSION="1.21.4.1"
-ARG RESTY_OPENSSL_VERSION="1.1.1k"
+LABEL maintainer="Jussi Alanen - Hion Digital Oy <jussi.alanen@hiondigital.com>"
 
+ARG NGINX_VERSION="1.22.0"
+ARG OPENSSL_VERSION="1.1.1k"
 ARG PAGESPEED_VERSION="1.13.35.2"
+ARG MAKE_J=4
 
-# Fix apt-get and show colors
-ARG DEBIAN_FRONTEND=noninteractive
-ARG TERM=xterm-color
+# RUN echo 'deb [arch=amd64] http://nginx.org/packages/mainline/ubuntu/ noble nginx'
+# RUN echo 'deb-src http://nginx.org/packages/mainline/ubuntu/ noble nginx > /etc/apt/sources.list.d/nginx.list'
+# RUN curl -L http://nginx.org/keys/nginx_signing.key|apt-key add -
 
-ARG RESTY_CONFIG_OPTIONS="\
+RUN apt-get update && apt-get install -y  \
+    dpkg-dev \
+    gnupg \
+    perl \
+    wget \
+    git nano \
+    g++ \
+    gcc \
+    curl \
+    make \
+    unzip \
+    bzip2 \
+    gperf \
+    python-is-python3 \
+    openssl \
+    libuuid1 \
+    apt-utils \
+    pkg-config \
+    icu-devtools \
+    build-essential \
+    ca-certificates \
+    uuid-dev \
+    zlib1g-dev \
+    libicu-dev \
+    libssl-dev \
+    apache2-dev \
+    libpcre3 \
+    libpcre3-dev \
+    libmaxminddb-dev \
+    libpng-dev \
+    libaprutil1-dev \
+    libcurl4-openssl-dev
+
+COPY entrypoint.sh /usr/local/bin
+
+RUN mkdir -p /usr/local/src/nginx && \
+    echo "Downloading Nginx..." && \
+    cd /tmp && \
+    wget http://nginx.org/download/nginx-$NGINX_VERSION.tar.gz && \
+    tar -zxvf nginx-$NGINX_VERSION.tar.gz
+
+RUN cd /tmp && \
+    echo "Downloading PageSpeed for Nginx..." && \
+    git clone https://github.com/apache/incubator-pagespeed-ngx.git && \
+    cd incubator-pagespeed-ngx/ && \
+    git checkout latest-stable
+
+RUN cd /tmp && \
+    # Download OpenSSL
+    echo "Downloading OpenSSL..." && \
+    curl -L https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz | tar -zx
+
+RUN cd /tmp/incubator-pagespeed-ngx && \
+    echo "Downloading Incubator Pagespeed for Nginx..." && \
+    wget https://dl.google.com/dl/page-speed/psol/$PAGESPEED_VERSION-x64.tar.gz && \
+    tar -xvzf $PAGESPEED_VERSION-x64.tar.gz
+
+# Build in additional Nginx modules
+RUN cd /tmp && \
+    git clone https://github.com/vozlt/nginx-module-vts.git && \
+    git clone https://github.com/FRiCKLE/ngx_cache_purge.git && \
+    git clone https://github.com/simplresty/ngx_devel_kit.git && \
+    git clone https://github.com/leev/ngx_http_geoip2_module.git && \
+    git clone https://github.com/openresty/echo-nginx-module.git && \
+    git clone https://github.com/onnimonni/redis-nginx-module.git && \
+    git clone https://github.com/onnimonni/ngx_http_redis-0.3.7 && \
+    git clone https://github.com/openresty/redis2-nginx-module.git && \
+    git clone https://github.com/openresty/srcache-nginx-module.git && \
+    git clone https://github.com/openresty/set-misc-nginx-module.git && \
+    git clone https://github.com/openresty/headers-more-nginx-module.git && \
+    git clone https://github.com/yaoweibin/ngx_http_substitutions_filter_module.git
+
+RUN ls -la /tmp/
+RUN ls -la /tmp/ngx_http_geoip2_module
+
+RUN cd /tmp/nginx-$NGINX_VERSION && \
+    ./configure --with-compat \
+
     --with-http_addition_module \
     --with-http_auth_request_module \
     --with-http_flv_module \
@@ -26,7 +103,6 @@ ARG RESTY_CONFIG_OPTIONS="\
     --with-http_stub_status_module \
     --with-http_sub_module \
     --with-http_v2_module \
-    --with-http_geoip_module=dynamic \
 
     --with-file-aio \
     --with-ipv6 \
@@ -46,8 +122,6 @@ ARG RESTY_CONFIG_OPTIONS="\
     --without-http_scgi_module \
     --without-http_referer_module \
 
-    --without-http_redis_module \
-
     --user=nginx \
     --group=nginx \
 
@@ -65,83 +139,48 @@ ARG RESTY_CONFIG_OPTIONS="\
     --http-proxy-temp-path=/tmp/nginx/proxy \
     --http-client-body-temp-path=/tmp/nginx/client_body \
 
-    # --add-module=/tmp/incubator-pagespeed-ngx-${PAGESPEED_VERSION}-stable \
-    --add-module=/tmp/ngx_cache_purge-2.3 \
-    --with-openssl=/tmp/openssl-${RESTY_OPENSSL_VERSION} \
-    "
+    --with-openssl=/tmp/openssl-${OPENSSL_VERSION} \
+    --add-module=/tmp/ngx_devel_kit \
+    --add-module=/tmp/ngx_cache_purge \
+    --add-module=/tmp/nginx-module-vts \
+    --add-module=/tmp/echo-nginx-module \
+    --add-module=/tmp/redis-nginx-module \
+    --add-module=/tmp/redis2-nginx-module \
+    --add-module=/tmp/srcache-nginx-module \
+    --add-module=/tmp/set-misc-nginx-module \
+    --add-module=/tmp/ngx_http_geoip2_module \
+    --add-module=/tmp/headers-more-nginx-module && \
+    # --add-module=/tmp/incubator-pagespeed-ngx && \
+    make -j${MAKE_J} && \
+    make -j${MAKE_J} install
 
 
-# These are only needed during the installation
-ARG BUILD_DEPS='build-essential curl make perl libreadline-dev libpthread-stubs0-dev libncurses5-dev libpcre3-dev libssl-dev libgeoip-dev zlib1g-dev ca-certificates uuid-dev g++-11'
+# RUN apt-get update && apt-get install -y php
 
-# Install base utils
-RUN apt-get update
-RUN apt-get -y install $BUILD_DEPS --no-install-recommends
+### MaxMind not longer supports database downloads
+### so upload them yourself into /usr/share/GeoIP2 folder
+# RUN mkdir -p /usr/share/GeoIP2
+# COPY /tmp/geoip2/* /usr/share/GeoIP2/
 
+# # Install helpers
+# RUN \
+#     ##
+#     # Install composer
+#     ##
+#     curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \
+#     ##
+#     # Install wp-cli
+#     # source: http://wp-cli.org/
+#     ##
+#     && curl -L https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar -o /usr/local/bin/wp-cli \
+#     && chmod +rx /usr/local/bin/wp-cli \
+#     && ln -s /usr/local/bin/wp-cli /usr/bin/wp
 
-RUN cd /tmp/ && \
+# RUN cp objs/ngx_pagespeed.so /etc/nginx/modules/
 
-    ### Download Tarballs ###
-    # Download PageSpeed
-    echo "Downloading PageSpeed..." && \
-    curl -L https://github.com/apache/incubator-pagespeed-ngx/archive/v${PAGESPEED_VERSION}-stable.tar.gz | tar -zx && \
+RUN chmod +x /usr/local/bin/*
 
-    ls -lah && \
+EXPOSE 80 8080
 
-    # psol needs to be inside ngx_pagespeed module
-    # Download PageSpeed Optimization Library and extract it to nginx source dir
-    #cd /tmp/ngx_pagespeed-${PAGESPEED_VERSION}-stable/ && \
-    cd /tmp/incubator-pagespeed-ngx-${PAGESPEED_VERSION}-stable/ && \
-    echo "Downloading PSOL..." && \
-    curl -L https://dl.google.com/dl/page-speed/psol/${PAGESPEED_VERSION}-x64.tar.gz | tar -zx && \
-
-    cd /tmp/ && \
-    # Download Nginx cache purge module
-    echo "Downloading Nginx cache purge module..." && \
-    curl -L http://labs.frickle.com/files/ngx_cache_purge-2.3.tar.gz | tar -zx && \
-
-    # Download OpenSSL
-    echo "Downloading OpenSSL..." && \
-    curl -L https://www.openssl.org/source/openssl-${RESTY_OPENSSL_VERSION}.tar.gz | tar -zx && \
-
-    # Download Openresty bundle
-    echo "Downloading openresty..." && \
-    curl -L https://openresty.org/download/openresty-${RESTY_VERSION}.tar.gz | tar -zx && \
-
-    # Download custom redis module with AUTH support
-    echo "Downloading ngx_http_redis..." && \
-    curl -L https://github.com/onnimonni/ngx_http_redis-0.3.7/archive/master.tar.gz | tar -zx && \
-
-    # Use all cores available in the builds with -j${NPROC} flag
-    readonly NPROC=$(grep -c ^processor /proc/cpuinfo 2>/dev/null || 1)  && \
-    echo "using up to $NPROC threads" && \
-
-    ### Configure Nginx ###
-    cd openresty-${RESTY_VERSION} && \
-    ./configure -j${NPROC} ${_RESTY_CONFIG_DEPS} ${RESTY_CONFIG_OPTIONS} && \
-
-    # Build Nginx
-    make -j${NPROC} && \
-    make -j${NPROC} install && \
-
-    mkdir -p /var/lib/nginx /var/log/nginx && \
-
-    ## Cleanup
-    rm -rf /var/lib/apt/lists/* && \
-    rm -rf /tmp/* /var/log/apt/*
-
-RUN \
-    # Temp directory
-    mkdir /tmp/nginx/ \
-    mkdir -p /tmp/nginx/pagespeed/images/ \
-
-    # Symlink modules path to config path for easier usage
-    && ln -sf /usr/lib/nginx /etc/nginx/modules \
-
-    # Create nginx group
-    && groupadd -g 8888 nginx \
-    && useradd -u 8888 -g nginx nginx \
-
-    # Symlink nginx logs to system output
-    && ln -sf /dev/stdout /var/log/nginx/access.log \
-    && ln -sf /dev/stderr /var/log/nginx/error.log
+ENTRYPOINT ["entrypoint.sh"]
+CMD ["nginx", "-g", "daemon off;"]
