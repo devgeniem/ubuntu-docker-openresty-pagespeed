@@ -1,101 +1,56 @@
-FROM ubuntu:jammy
+FROM devgeniem/base:jammy
 
 LABEL maintainer="Jussi Alanen - Hion Digital Oy <jussi.alanen@hiondigital.com>"
 
-ARG NGINX_VERSION="1.22.0"
-ARG OPENSSL_VERSION="1.1.1k"
+# Version of packages
+ARG RESTY_VERSION="1.21.4.1"
+ARG OPENSSL_VERSION="1.1.1w"
 ARG PAGESPEED_VERSION="1.13.35.2"
 ARG PSOL="jammy"
 ARG MAKE_J=4
 
-# RUN echo 'deb [arch=amd64] http://nginx.org/packages/mainline/ubuntu/ noble nginx'
-# RUN echo 'deb-src http://nginx.org/packages/mainline/ubuntu/ noble nginx > /etc/apt/sources.list.d/nginx.list'
-# RUN curl -L http://nginx.org/keys/nginx_signing.key|apt-key add -
+# Fix apt-get and show colors
+ARG DEBIAN_FRONTEND=noninteractive
+ARG TERM=xterm-color
 
-RUN apt-get update && apt-get install -y  \
-    dpkg-dev \
-    gnupg \
-    perl \
-    wget \
-    git nano \
-    g++ \
-    gcc \
-    curl \
-    make \
-    unzip \
-    bzip2 \
-    gperf \
-    python-is-python3 \
-    openssl \
-    libuuid1 \
-    apt-utils \
-    pkg-config \
-    icu-devtools \
-    build-essential \
-    ca-certificates \
-    uuid-dev \
-    zlib1g-dev \
-    libicu-dev \
-    libssl-dev \
-    apache2-dev \
-    libpcre3 \
-    libpcre3-dev \
-    libmaxminddb-dev \
-    libpng-dev \
-    libaprutil1-dev \
-    libcurl4-openssl-dev
+# Build deps
+ARG BUILD_DEPS='build-essential git wget curl make perl libreadline-dev libncurses5-dev libpcre3-dev libssl-dev libgeoip-dev zlib1g-dev ca-certificates uuid-dev'
 
-COPY entrypoint.sh /usr/local/bin
+RUN apt-get update && apt-get install -y $BUILD_DEPS --no-install-recommends
 
 RUN mkdir -p /usr/local/src/nginx && \
-    echo "Downloading Nginx..." && \
     cd /tmp && \
-    wget http://nginx.org/download/nginx-$NGINX_VERSION.tar.gz && \
-    tar -zxvf nginx-$NGINX_VERSION.tar.gz && \
 
+    # Download Openresty bundle
+    echo "Downloading openresty..." && \
+    curl -L https://openresty.org/download/openresty-${RESTY_VERSION}.tar.gz | tar -zx && \
+
+    # Download Pagespeed for Nginx
     cd /tmp && \
-    echo "Downloading PageSpeed for Nginx..." && \
+    echo "Downloading PageSpeed for Openresty/Nginx bundle..." && \
     git clone https://github.com/apache/incubator-pagespeed-ngx.git && \
     cd incubator-pagespeed-ngx/ && \
     git checkout latest-stable && \
 
+    # Download the correct PSOL extension for PageSpeed (for Ubuntu)
     cd /tmp && \
     wget http://www.tiredofit.nl/psol-${PSOL}.tar.xz && \
     tar -xvf psol-${PSOL}.tar.xz && \
     cp -r psol /tmp/incubator-pagespeed-ngx && \
 
-
-    # cd /tmp/incubator-pagespeed-ngx && \
-    # echo "Downloading Incubator Pagespeed for Nginx..." && \
-    # wget https://dl.google.com/dl/page-speed/psol/$PAGESPEED_VERSION-x64.tar.gz && \
-    # tar -xvzf $PAGESPEED_VERSION-x64.tar.gz && \
-
-    cd /tmp && \
     # Download OpenSSL
+    cd /tmp && \
     echo "Downloading OpenSSL..." && \
     curl -L https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz | tar -zx && \
 
     # Build in additional Nginx modules
     cd /tmp && \
-    git clone https://github.com/vozlt/nginx-module-vts.git && \
     git clone https://github.com/FRiCKLE/ngx_cache_purge.git && \
-    git clone https://github.com/simplresty/ngx_devel_kit.git && \
-    git clone https://github.com/leev/ngx_http_geoip2_module.git && \
-    git clone https://github.com/openresty/echo-nginx-module.git && \
-    git clone https://github.com/onnimonni/redis-nginx-module.git && \
-    git clone https://github.com/onnimonni/ngx_http_redis-0.3.7 && \
-    git clone https://github.com/openresty/redis2-nginx-module.git && \
-    git clone https://github.com/openresty/srcache-nginx-module.git && \
-    git clone https://github.com/openresty/set-misc-nginx-module.git && \
-    git clone https://github.com/openresty/headers-more-nginx-module.git && \
-    git clone https://github.com/yaoweibin/ngx_http_substitutions_filter_module.git && \
 
-    # RUN ls -la /tmp/
-    # RUN ls -la /tmp/ngx_http_geoip2_module
-
-    cd /tmp/nginx-$NGINX_VERSION && \
-    ./configure --with-compat \
-
+    cd openresty-${RESTY_VERSION} && \
+    # cd /tmp/nginx-$NGINX_VERSION && \
+    ./configure -j${MAKE_J} ${_RESTY_CONFIG_DEPS} \
+    --with-compat \
     --with-http_addition_module \
     --with-http_auth_request_module \
     --with-http_flv_module \
@@ -129,6 +84,8 @@ RUN mkdir -p /usr/local/src/nginx && \
     --without-http_scgi_module \
     --without-http_referer_module \
 
+    --without-http_redis_module \
+
     --user=nginx \
     --group=nginx \
 
@@ -147,48 +104,30 @@ RUN mkdir -p /usr/local/src/nginx && \
     --http-client-body-temp-path=/tmp/nginx/client_body \
 
     --with-openssl=/tmp/openssl-${OPENSSL_VERSION} \
-    --add-module=/tmp/ngx_devel_kit \
     --add-module=/tmp/ngx_cache_purge \
-    --add-module=/tmp/nginx-module-vts \
-    --add-module=/tmp/echo-nginx-module \
-    --add-module=/tmp/redis-nginx-module \
-    --add-module=/tmp/redis2-nginx-module \
-    --add-module=/tmp/srcache-nginx-module \
-    --add-module=/tmp/set-misc-nginx-module \
-    --add-module=/tmp/ngx_http_geoip2_module \
-    --add-module=/tmp/headers-more-nginx-module \
     --add-module=/tmp/incubator-pagespeed-ngx && \
 
     make -j${MAKE_J} && \
-    make -j${MAKE_J} install
+    make -j${MAKE_J} install && \
 
+    mkdir -p /var/lib/nginx /var/log/nginx && \
 
-# RUN apt-get update && apt-get install -y php
+    ## Cleanup
+    rm -rf /var/lib/apt/lists/* && \
+    rm -rf /tmp/* /var/log/apt/*
 
-### MaxMind not longer supports database downloads
-### so upload them yourself into /usr/share/GeoIP2 folder
-# RUN mkdir -p /usr/share/GeoIP2
-# COPY /tmp/geoip2/* /usr/share/GeoIP2/
+RUN \
+    # Temp directory
+    mkdir /tmp/nginx/ \
+    mkdir -p /tmp/nginx/pagespeed/images/ \
 
-# # Install helpers
-# RUN \
-#     ##
-#     # Install composer
-#     ##
-#     curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \
-#     ##
-#     # Install wp-cli
-#     # source: http://wp-cli.org/
-#     ##
-#     && curl -L https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar -o /usr/local/bin/wp-cli \
-#     && chmod +rx /usr/local/bin/wp-cli \
-#     && ln -s /usr/local/bin/wp-cli /usr/bin/wp
+    # Symlink modules path to config path for easier usage
+    && ln -sf /usr/lib/nginx /etc/nginx/modules \
 
-# RUN cp objs/ngx_pagespeed.so /etc/nginx/modules/
+    # Create nginx group
+    && groupadd -g 8888 nginx \
+    && useradd -u 8888 -g nginx nginx \
 
-RUN chmod +x /usr/local/bin/*
-
-EXPOSE 80 8080
-
-ENTRYPOINT ["entrypoint.sh"]
-CMD ["nginx", "-g", "daemon off;"]
+    # Symlink nginx logs to system output
+    && ln -sf /dev/stdout /var/log/nginx/access.log \
+    && ln -sf /dev/stderr /var/log/nginx/error.log
