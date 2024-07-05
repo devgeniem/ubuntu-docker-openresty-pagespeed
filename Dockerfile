@@ -1,10 +1,11 @@
-FROM ubuntu:noble
+FROM ubuntu:jammy
 
 LABEL maintainer="Jussi Alanen - Hion Digital Oy <jussi.alanen@hiondigital.com>"
 
 ARG NGINX_VERSION="1.22.0"
 ARG OPENSSL_VERSION="1.1.1k"
 ARG PAGESPEED_VERSION="1.13.35.2"
+ARG PSOL="jammy"
 ARG MAKE_J=4
 
 # RUN echo 'deb [arch=amd64] http://nginx.org/packages/mainline/ubuntu/ noble nginx'
@@ -50,26 +51,32 @@ RUN mkdir -p /usr/local/src/nginx && \
     echo "Downloading Nginx..." && \
     cd /tmp && \
     wget http://nginx.org/download/nginx-$NGINX_VERSION.tar.gz && \
-    tar -zxvf nginx-$NGINX_VERSION.tar.gz
+    tar -zxvf nginx-$NGINX_VERSION.tar.gz && \
 
-RUN cd /tmp && \
+    cd /tmp && \
     echo "Downloading PageSpeed for Nginx..." && \
     git clone https://github.com/apache/incubator-pagespeed-ngx.git && \
     cd incubator-pagespeed-ngx/ && \
-    git checkout latest-stable
+    git checkout latest-stable && \
 
-RUN cd /tmp && \
+    cd /tmp && \
+    wget http://www.tiredofit.nl/psol-${PSOL}.tar.xz && \
+    tar -xvf psol-${PSOL}.tar.xz && \
+    cp -r psol /tmp/incubator-pagespeed-ngx && \
+
+
+    # cd /tmp/incubator-pagespeed-ngx && \
+    # echo "Downloading Incubator Pagespeed for Nginx..." && \
+    # wget https://dl.google.com/dl/page-speed/psol/$PAGESPEED_VERSION-x64.tar.gz && \
+    # tar -xvzf $PAGESPEED_VERSION-x64.tar.gz && \
+
+    cd /tmp && \
     # Download OpenSSL
     echo "Downloading OpenSSL..." && \
-    curl -L https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz | tar -zx
+    curl -L https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz | tar -zx && \
 
-RUN cd /tmp/incubator-pagespeed-ngx && \
-    echo "Downloading Incubator Pagespeed for Nginx..." && \
-    wget https://dl.google.com/dl/page-speed/psol/$PAGESPEED_VERSION-x64.tar.gz && \
-    tar -xvzf $PAGESPEED_VERSION-x64.tar.gz
-
-# Build in additional Nginx modules
-RUN cd /tmp && \
+    # Build in additional Nginx modules
+    cd /tmp && \
     git clone https://github.com/vozlt/nginx-module-vts.git && \
     git clone https://github.com/FRiCKLE/ngx_cache_purge.git && \
     git clone https://github.com/simplresty/ngx_devel_kit.git && \
@@ -81,12 +88,12 @@ RUN cd /tmp && \
     git clone https://github.com/openresty/srcache-nginx-module.git && \
     git clone https://github.com/openresty/set-misc-nginx-module.git && \
     git clone https://github.com/openresty/headers-more-nginx-module.git && \
-    git clone https://github.com/yaoweibin/ngx_http_substitutions_filter_module.git
+    git clone https://github.com/yaoweibin/ngx_http_substitutions_filter_module.git && \
 
-RUN ls -la /tmp/
-RUN ls -la /tmp/ngx_http_geoip2_module
+    # RUN ls -la /tmp/
+    # RUN ls -la /tmp/ngx_http_geoip2_module
 
-RUN cd /tmp/nginx-$NGINX_VERSION && \
+    cd /tmp/nginx-$NGINX_VERSION && \
     ./configure --with-compat \
 
     --with-http_addition_module \
@@ -149,8 +156,9 @@ RUN cd /tmp/nginx-$NGINX_VERSION && \
     --add-module=/tmp/srcache-nginx-module \
     --add-module=/tmp/set-misc-nginx-module \
     --add-module=/tmp/ngx_http_geoip2_module \
-    --add-module=/tmp/headers-more-nginx-module && \
-    # --add-module=/tmp/incubator-pagespeed-ngx && \
+    --add-module=/tmp/headers-more-nginx-module \
+    --add-module=/tmp/incubator-pagespeed-ngx && \
+
     make -j${MAKE_J} && \
     make -j${MAKE_J} install
 
