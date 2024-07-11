@@ -1,4 +1,4 @@
-FROM ubuntu:noble
+FROM devgeniem/base:noble
 
 LABEL maintainer="Jussi Alanen - Hion Digital Oy <jussi.alanen@hiondigital.com>"
 
@@ -6,10 +6,6 @@ ARG NGINX_VERSION="1.22.0"
 ARG OPENSSL_VERSION="1.1.1k"
 ARG PAGESPEED_VERSION="1.13.35.2"
 ARG MAKE_J=4
-
-# RUN echo 'deb [arch=amd64] http://nginx.org/packages/mainline/ubuntu/ noble nginx'
-# RUN echo 'deb-src http://nginx.org/packages/mainline/ubuntu/ noble nginx > /etc/apt/sources.list.d/nginx.list'
-# RUN curl -L http://nginx.org/keys/nginx_signing.key|apt-key add -
 
 RUN apt-get update && apt-get install -y  \
     dpkg-dev \
@@ -46,23 +42,26 @@ RUN apt-get update && apt-get install -y  \
 
 COPY entrypoint.sh /usr/local/bin
 
+# Download Nginx
 RUN mkdir -p /usr/local/src/nginx && \
     echo "Downloading Nginx..." && \
     cd /tmp && \
     wget http://nginx.org/download/nginx-$NGINX_VERSION.tar.gz && \
     tar -zxvf nginx-$NGINX_VERSION.tar.gz
 
+# Download Pagespeed for Nginx
 RUN cd /tmp && \
     echo "Downloading PageSpeed for Nginx..." && \
     git clone https://github.com/apache/incubator-pagespeed-ngx.git && \
     cd incubator-pagespeed-ngx/ && \
     git checkout latest-stable
 
+# Download OpenSSL
 RUN cd /tmp && \
-    # Download OpenSSL
     echo "Downloading OpenSSL..." && \
     curl -L https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz | tar -zx
 
+# Download Pagespeed Incubator
 RUN cd /tmp/incubator-pagespeed-ngx && \
     echo "Downloading Incubator Pagespeed for Nginx..." && \
     wget https://dl.google.com/dl/page-speed/psol/$PAGESPEED_VERSION-x64.tar.gz && \
@@ -86,6 +85,7 @@ RUN cd /tmp && \
 RUN ls -la /tmp/
 RUN ls -la /tmp/ngx_http_geoip2_module
 
+# Build the Nginx, and modules
 RUN cd /tmp/nginx-$NGINX_VERSION && \
     ./configure --with-compat \
 
@@ -152,35 +152,26 @@ RUN cd /tmp/nginx-$NGINX_VERSION && \
     --add-module=/tmp/headers-more-nginx-module && \
     # --add-module=/tmp/incubator-pagespeed-ngx && \
     make -j${MAKE_J} && \
-    make -j${MAKE_J} install
+    make -j${MAKE_J} install && \
 
+    mkdir -p /var/lib/nginx /var/log/nginx && \
 
-# RUN apt-get update && apt-get install -y php
+    ## Cleanup
+    rm -rf /var/lib/apt/lists/* && \
+    rm -rf /tmp/* /var/log/apt/*
 
-### MaxMind not longer supports database downloads
-### so upload them yourself into /usr/share/GeoIP2 folder
-# RUN mkdir -p /usr/share/GeoIP2
-# COPY /tmp/geoip2/* /usr/share/GeoIP2/
+RUN \
+    # Temp directory
+    mkdir /tmp/nginx/ \
+    mkdir -p /tmp/nginx/pagespeed/images/ \
 
-# # Install helpers
-# RUN \
-#     ##
-#     # Install composer
-#     ##
-#     curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \
-#     ##
-#     # Install wp-cli
-#     # source: http://wp-cli.org/
-#     ##
-#     && curl -L https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar -o /usr/local/bin/wp-cli \
-#     && chmod +rx /usr/local/bin/wp-cli \
-#     && ln -s /usr/local/bin/wp-cli /usr/bin/wp
+    # Symlink modules path to config path for easier usage
+    && ln -sf /usr/lib/nginx /etc/nginx/modules \
 
-# RUN cp objs/ngx_pagespeed.so /etc/nginx/modules/
+    # Create nginx group
+    && groupadd -g 8888 nginx \
+    && useradd -u 8888 -g nginx nginx \
 
-RUN chmod +x /usr/local/bin/*
-
-EXPOSE 80 8080
-
-ENTRYPOINT ["entrypoint.sh"]
-CMD ["nginx", "-g", "daemon off;"]
+    # Symlink nginx logs to system output
+    && ln -sf /dev/stdout /var/log/nginx/access.log \
+    && ln -sf /dev/stderr /var/log/nginx/error.log
