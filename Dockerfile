@@ -40,8 +40,6 @@ RUN apt-get update && apt-get install -y  \
     libaprutil1-dev \
     libcurl4-openssl-dev
 
-COPY entrypoint.sh /usr/local/bin
-
 # Download Nginx
 RUN mkdir -p /usr/local/src/nginx && \
     echo "Downloading Nginx..." && \
