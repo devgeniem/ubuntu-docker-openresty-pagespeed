@@ -2,10 +2,9 @@ FROM devgeniem/base:edge3
 MAINTAINER Ville Pietarinen, Hannu Kumpula - Geniem Oy <ville.pietarinen-nospam@geniem.com> <hannu-nospam@geniem.com>
 
 # Build Arguments for openresty/nginx
-ARG RESTY_VERSION="1.21.4.1"
-ARG RESTY_OPENSSL_VERSION="1.1.1k"
-
-ARG PAGESPEED_VERSION="1.13.35.2"
+ARG RESTY_VERSION="1.31.8.1"
+ARG RESTY_OPENSSL_VERSION="3.5.9"
+ARG CACHE_PURGE_VERSION="3.0.4"
 
 # Fix apt-get and show colors
 ARG DEBIAN_FRONTEND=noninteractive
@@ -65,8 +64,7 @@ ARG RESTY_CONFIG_OPTIONS="\
     --http-proxy-temp-path=/tmp/nginx/proxy \
     --http-client-body-temp-path=/tmp/nginx/client_body \
 
-    --add-module=/tmp/incubator-pagespeed-ngx-${PAGESPEED_VERSION}-stable \
-    --add-module=/tmp/ngx_cache_purge-2.3 \
+    --add-module=/tmp/ngx_cache_purge-${CACHE_PURGE_VERSION} \
     --with-openssl=/tmp/openssl-${RESTY_OPENSSL_VERSION} \
     "
 
@@ -82,27 +80,13 @@ RUN \
     cd /tmp/ && \
 
     ### Download Tarballs ###
-    # Download PageSpeed
-    echo "Downloading PageSpeed..." && \
-    curl -L https://github.com/apache/incubator-pagespeed-ngx/archive/v${PAGESPEED_VERSION}-stable.tar.gz | tar -zx && \
-
-    ls -lah && \
-
-    # psol needs to be inside ngx_pagespeed module
-    # Download PageSpeed Optimization Library and extract it to nginx source dir
-    #cd /tmp/ngx_pagespeed-${PAGESPEED_VERSION}-stable/ && \
-    cd /tmp/incubator-pagespeed-ngx-${PAGESPEED_VERSION}-stable/ && \
-    echo "Downloading PSOL..." && \
-    curl -L https://dl.google.com/dl/page-speed/psol/${PAGESPEED_VERSION}-x64.tar.gz | tar -zx && \
-
-    cd /tmp/ && \
     # Download Nginx cache purge module
     echo "Downloading Nginx cache purge module..." && \
-    curl -L http://labs.frickle.com/files/ngx_cache_purge-2.3.tar.gz | tar -zx && \
+    curl -L https://github.com/nginx-modules/ngx_cache_purge/archive/refs/tags/${CACHE_PURGE_VERSION}.tar.gz | tar -zx && \
 
     # Download OpenSSL
     echo "Downloading OpenSSL..." && \
-    curl -L https://www.openssl.org/source/openssl-${RESTY_OPENSSL_VERSION}.tar.gz | tar -zx && \
+    curl -L https://github.com/openssl/openssl/releases/download/openssl-${RESTY_OPENSSL_VERSION}/openssl-${RESTY_OPENSSL_VERSION}.tar.gz | tar -zx && \
 
     # Download Openresty bundle
     echo "Downloading openresty..." && \
@@ -134,7 +118,6 @@ RUN \
 RUN \
     # Temp directory
     mkdir /tmp/nginx/ \
-    mkdir -p /tmp/nginx/pagespeed/images/ \
 
     # Symlink modules path to config path for easier usage
     && ln -sf /usr/lib/nginx /etc/nginx/modules \
