@@ -1,4 +1,4 @@
-FROM devgeniem/base:edge3
+FROM devgeniem/base:edge4
 MAINTAINER Ville Pietarinen, Hannu Kumpula - Geniem Oy <ville.pietarinen-nospam@geniem.com> <hannu-nospam@geniem.com>
 
 # Build Arguments for openresty/nginx
@@ -70,7 +70,7 @@ ARG RESTY_CONFIG_OPTIONS="\
 
 
 # These are only needed during the installation
-ARG BUILD_DEPS='build-essential curl libreadline-dev libncurses5-dev libpcre3-dev libgeoip-dev zlib1g-dev ca-certificates uuid-dev'
+ARG BUILD_DEPS='build-essential curl libreadline-dev libncurses-dev libpcre2-dev libgeoip-dev zlib1g-dev ca-certificates uuid-dev'
 
 # Install base utils
 RUN \
