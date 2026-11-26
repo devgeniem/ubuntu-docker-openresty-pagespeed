@@ -1,4 +1,4 @@
-FROM devgeniem/base:edge3
+FROM devgeniem/base
 MAINTAINER Ville Pietarinen, Hannu Kumpula - Geniem Oy <ville.pietarinen-nospam@geniem.com> <hannu-nospam@geniem.com>
 
 # Build Arguments for openresty/nginx
